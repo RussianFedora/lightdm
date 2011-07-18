@@ -15,7 +15,7 @@ BuildRequires:	dbus-glib-devel
 BuildRequires:	libxklavier-devel
 BuildRequires:	gtk2-devel
 BuildRequires:	vala-devel
-BuildRequires:	qt4-devel
+BuildRequires:	qt-devel
 BuildRequires:	gobject-introspection-devel
 
 Requires:	%{name}-greeter = %{version}-%{release}
