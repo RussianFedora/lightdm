@@ -1,7 +1,7 @@
 Summary:	Lightweight display manager
 Name:		lightdm
-Version:	0.3.3
-Release:	1%{?dist}
+Version:	0.4.4
+Release:	1%{?dist}.R
 
 URL:		http://people.ubuntu.com/~robert-ancell/lightdm/releases/
 License:	GPLv3
@@ -174,6 +174,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/themes/example-qt-kde
 
 %changelog
+* Mon Jul 18 2011 Vasiliy N. Glazov <vascom2@gmail.com> - 0.4.4-1.R
+- update to 0.4.4
+
 * Thu May 12 2011 Arkady L. Shane <ashejn@yandex-team.ru> - 0.3.3
 - update to 0.3.3
 - clean up spec
