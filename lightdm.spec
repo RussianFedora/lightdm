@@ -7,6 +7,7 @@ URL:		http://people.ubuntu.com/~robert-ancell/lightdm/releases/
 License:	GPLv3
 Group:		Development/Libraries
 Source:		http://people.ubuntu.com/~robert-ancell/lightdm/releases/%{name}-%{version}.tar.gz
+Patch00:        fedora-qt.patch
 
 BuildRequires:	intltool
 BuildRequires:	pam-devel
@@ -95,6 +96,7 @@ several toolkits, including HTML/CSS/Javascript.
 
 %prep
 %setup -q
+%patch00 -p1
 
 %build
 %configure \
@@ -124,7 +126,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %doc COPYING ChangeLog INSTALL NEWS README
 %{_bindir}/%{name}
-%config(noreplace) %{_sysconfdir}/%{name}.conf
+%config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf
 %config(noreplace) %{_sysconfdir}/init/%{name}.conf
 %config(noreplace) %{_sysconfdir}/dbus-1/system.d/*
 %{_mandir}/man1/%{name}.*
@@ -176,6 +178,8 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Mon Jul 18 2011 Vasiliy N. Glazov <vascom2@gmail.com> - 0.4.4-1.R
 - update to 0.4.4
+- added patch for QT utils name fedora-qt.patch
+- corrected config path in /etc
 
 * Thu May 12 2011 Arkady L. Shane <ashejn@yandex-team.ru> - 0.3.3
 - update to 0.3.3
