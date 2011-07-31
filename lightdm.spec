@@ -1,13 +1,14 @@
 Summary:	Lightweight display manager
 Name:		lightdm
-Version:	0.4.4
+Version:	0.9.2
 Release:	1%{?dist}.R
 
-URL:		http://people.ubuntu.com/~robert-ancell/lightdm/releases/
+URL:		https://launchpad.net/lightdm
 License:	GPLv3
 Group:		Development/Libraries
-Source:		http://people.ubuntu.com/~robert-ancell/lightdm/releases/%{name}-%{version}.tar.gz
-Patch00:        fedora-qt.patch
+Source:		http://launchpad.net/%{name}/trunk/%{version}/+download/%{name}-%{version}.tar.gz
+Patch1:		%{name}-%{version}-fix-configure-ac.patch
+Patch2:		%{name}-%{version}-fix-tools.patch
 
 BuildRequires:	intltool
 BuildRequires:	pam-devel
@@ -18,6 +19,7 @@ BuildRequires:	gtk2-devel
 BuildRequires:	vala-devel
 BuildRequires:	qt-devel
 BuildRequires:	gobject-introspection-devel
+BuildRequires:	gtk-doc gnome-common
 
 Requires:	%{name}-greeter = %{version}-%{release}
 
@@ -60,24 +62,6 @@ Provides:	%{name}-greeter = %{version}-%{release}
 %description    gtk-greeter
 %{summary} - Gtk greeter
 
-%package	python-gtk-greeter
-Summary:	Python-GTK greeter for LightDM
-Group:		User Interface/X
-Requires:	%{name}-gobject = %{version}-%{release}
-Provides:	%{name}-greeter = %{version}-%{release}
-
-%description    python-gtk-greeter
-%{summary} - Python-Gtk greeter
-
-%package	vala-gtk-greeter
-Summary:	Vala-GTK greeter for LightDM
-Group:		User Interface/X
-Requires:	%{name}-gobject = %{version}-%{release}
-Provides:	%{name}-greeter = %{version}-%{release}
-
-%description    vala-gtk-greeter
-%{summary} - Vala-Gtk greeter
-
 %package	qt-greeter
 Summary:	Qt greeter for LightDM
 Group:		User Interface/X
@@ -96,23 +80,25 @@ several toolkits, including HTML/CSS/Javascript.
 
 %prep
 %setup -q
-%patch00 -p1
+%patch1 -p1 -b .fix-configure-ac
+%patch2 -p1 -b .fix-tools
+#%patch3 -p1 -b .fix-rpath
 
 %build
-%configure \
+./autogen.sh \
 	--prefix=/usr \
+	--enable-liblightdm-qt \
 	--disable-static \
-	--disable-gtk-doc-html \
 	--sysconfdir=%{_sysconfdir} \
-	--with-dbus-sys=%{_sysconfdir}/dbus-1/system.d \
-	--with-log-dir=/var/log/%{name} \
-	--with-xauth-dir=/var/run/%{name}/authority
-make
+	--libdir=%{_libdir}
+
+make %{?_smp_mflags}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%makeinstall DBUS_SYS_DIR=$RPM_BUILD_ROOT%{_sysconfdir}/dbus-1/system.d
-rm -rf $RPM_BUILD_ROOT%{_datadir}/gtk-doc %{buildroot}/%{_libdir}/*.la
+make install DESTDIR=$RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_ROOT%{_libdir}/*.la
+rm -rf $RPM_BUILD_ROOT%{_datadir}/gtk-doc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -125,13 +111,16 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %doc COPYING ChangeLog INSTALL NEWS README
-%{_bindir}/%{name}
+%{_sbindir}/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf
+%config(noreplace) %{_sysconfdir}/%{name}/keys.conf
+%config(noreplace) %{_sysconfdir}/%{name}/users.conf
 %config(noreplace) %{_sysconfdir}/init/%{name}.conf
 %config(noreplace) %{_sysconfdir}/dbus-1/system.d/*
 %{_mandir}/man1/%{name}.*
-%{_libdir}/girepository-1.0/LightDM-0.typelib
-%{_datadir}/gir-1.0/LightDM-0.gir
+%{_libdir}/girepository-1.0/LightDM-1.typelib
+%{_datadir}/gir-1.0/LightDM-1.gir
+%{_datadir}/locale/*
 
 %files	gobject
 %defattr(-,root,root,-)
@@ -142,6 +131,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/lib%{name}-gobject*.so
 %{_libdir}/pkgconfig/lib%{name}-gobject*
 %{_includedir}/%{name}-gobject*
+%{_datadir}/vala/vapi/liblightdm-gobject-1.vapi
 
 %files	qt
 %defattr(-,root,root,-)
@@ -155,27 +145,22 @@ rm -rf $RPM_BUILD_ROOT
 
 %files  gtk-greeter
 %defattr(-,root,root,-)
-%{_libexecdir}/lightdm-example-gtk-greeter
-%{_datadir}/%{name}/themes/example-gtk-gnome
-%{_datadir}/lightdm-example-gtk-greeter/greeter.ui
-
-%files  python-gtk-greeter
-%defattr(-,root,root,-)
-%{_libexecdir}/lightdm-example-python-gtk-greeter
-%{_datadir}/%{name}/themes/example-python-gtk-gnome
-
-%files  vala-gtk-greeter
-%defattr(-,root,root,-)
-%{_libexecdir}/lightdm-example-vala-gtk-greeter
-%{_datadir}/%{name}/themes/example-vala-gtk-gnome
-%{_datadir}/vala/vapi/liblightdm-gobject-0.vapi
+%{_sbindir}/lightdm-gtk-greeter
+%{_datadir}/lightdm-gtk-greeter/greeter.ui
+%config(noreplace) %{_sysconfdir}/%{name}/%{name}-gtk-greeter.conf
+%{_datadir}/%{name}-gtk-greeter/hicolor/scalable/apps/*.svg
+%{_datadir}/xgreeters/%{name}-gtk-greeter.desktop
 
 %files  qt-greeter
 %defattr(-,root,root,-)
-%{_libexecdir}/lightdm-example-qt-greeter
-%{_datadir}/%{name}/themes/example-qt-kde
+%{_sbindir}/lightdm-qt-greeter
+%{_datadir}/xgreeters/%{name}-qt-greeter.desktop
 
 %changelog
+* Sun Jul 31 2011 Alexei Panov <elemc AT atisserv DOT ru> - 0.9.2-1
+- new release
+- many fixes in spec and new patches
+
 * Mon Jul 18 2011 Vasiliy N. Glazov <vascom2@gmail.com> - 0.4.4-1.R
 - update to 0.4.4
 - added patch for QT utils name fedora-qt.patch
