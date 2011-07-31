@@ -9,6 +9,7 @@ Group:		Development/Libraries
 Source:		http://launchpad.net/%{name}/trunk/%{version}/+download/%{name}-%{version}.tar.gz
 Patch1:		%{name}-%{version}-fix-configure-ac.patch
 Patch2:		%{name}-%{version}-fix-tools.patch
+#Patch3:		%{name}-%{version}-fix-rpath.patch
 
 BuildRequires:	intltool
 BuildRequires:	pam-devel
@@ -20,6 +21,7 @@ BuildRequires:	vala-devel
 BuildRequires:	qt-devel
 BuildRequires:	gobject-introspection-devel
 BuildRequires:	gtk-doc gnome-common
+BuildRequires:	gtk3-devel glib2-devel
 
 Requires:	%{name}-greeter = %{version}-%{release}
 
@@ -88,6 +90,7 @@ several toolkits, including HTML/CSS/Javascript.
 ./autogen.sh \
 	--prefix=/usr \
 	--enable-liblightdm-qt \
+	--enable-liblightdm-gtk \
 	--disable-static \
 	--sysconfdir=%{_sysconfdir} \
 	--libdir=%{_libdir}
@@ -158,8 +161,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 * Sun Jul 31 2011 Alexei Panov <elemc AT atisserv DOT ru> - 0.9.2-1
-- new release
-- many fixes in spec and new patches
+- update to 0.9.2
 
 * Mon Jul 18 2011 Vasiliy N. Glazov <vascom2@gmail.com> - 0.4.4-1.R
 - update to 0.4.4
