@@ -1,0 +1,261 @@
+Description: Show a list of installed translations when applicable instead of a 'locale -a' list.
+Forwarded: no
+Author: Gunnar Hjalmarsson <ubuntu@gunnar.cc>
+
+--- lightdm.orig/greeters/gtk/lightdm-gtk-greeter.c	2011-10-24 21:56:40 +0200
++++ lightdm/greeters/gtk/lightdm-gtk-greeter.c	2011-11-16 20:22:10 +0100
+@@ -928,15 +928,27 @@
+         for (item = items; item; item = item->next)
+         {
+             LightDMLanguage *language = item->data;
+-            gchar *label;
++            gchar *label, *country, *code;
+ 
+-            label = g_strdup_printf ("%s - %s", lightdm_language_get_name (language), lightdm_language_get_territory (language));
++            country = lightdm_language_get_territory (language);
++            if (country)
++                label = g_strdup_printf ("%s - %s", lightdm_language_get_name (language), country);
++            else
++                label = g_strdup (lightdm_language_get_name (language));
++            code = lightdm_language_get_code (language);
++            gchar *modifier = strchr (code, '@');
++            if (modifier != NULL)
++            {
++                gchar *label_new = g_strdup_printf ("%s [%s]", label, modifier+1);
++                g_free (label);
++                label = label_new;
++            }
+ 
+             gtk_widget_show (GTK_WIDGET (language_combo));
+             gtk_list_store_append (GTK_LIST_STORE (model), &iter);
+             gtk_list_store_set (GTK_LIST_STORE (model), &iter,
+                                 0, label,
+-                                1, lightdm_language_get_code (language),
++                                1, code,
+                                 -1);
+             g_free (label);
+         }
+
+--- lightdm.orig/liblightdm-gobject/language.c	2011-09-28 09:11:35 +0200
++++ lightdm/liblightdm-gobject/language.c	2011-11-17 18:10:26 +0100
+@@ -12,6 +12,8 @@
+ #include <string.h>
+ #include <locale.h>
+ #include <langinfo.h>
++#include <stdio.h>
++#include <glib/gi18n.h>
+ 
+ #include "lightdm/language.h"
+ 
+@@ -32,6 +34,8 @@
+ G_DEFINE_TYPE (LightDMLanguage, lightdm_language, G_TYPE_OBJECT);
+ 
+ #define GET_PRIVATE(obj) G_TYPE_INSTANCE_GET_PRIVATE ((obj), LIGHTDM_TYPE_LANGUAGE, LightDMLanguagePrivate)
++#define NL_LANGINFO_LANGUAGE
++#define NL_LANGINFO_COUNTRY
+ 
+ static gboolean have_languages = FALSE;
+ static GList *languages = NULL;
+@@ -39,6 +43,7 @@
+ static void
+ update_languages (void)
+ {
++    gchar *command = "/usr/share/language-tools/language-options";
+     gchar *stdout_text = NULL, *stderr_text = NULL;
+     gint exit_status;
+     gboolean result;
+@@ -47,14 +52,17 @@
+     if (have_languages)
+         return;
+ 
+-    result = g_spawn_command_line_sync ("locale -a", &stdout_text, &stderr_text, &exit_status, &error);
++    if (!g_file_test (command, G_FILE_TEST_IS_EXECUTABLE))
++        command = "locale -a";
++
++    result = g_spawn_command_line_sync (command, &stdout_text, &stderr_text, &exit_status, &error);
+     if (error)
+     {
+-        g_warning ("Failed to run 'locale -a': %s", error->message);
++        g_warning ("Failed to run '%s': %s", command, error->message);
+         g_clear_error (&error);
+     }
+     else if (exit_status != 0)
+-        g_warning ("Failed to get languages, locale -a returned %d", exit_status);
++        g_warning ("Failed to get languages, '%s' returned %d", command, exit_status);
+     else if (result)
+     {
+         gchar **tokens;
+@@ -71,7 +79,7 @@
+                 continue;
+ 
+             /* Ignore the non-interesting languages */
+-            if (strcmp (code, "C") == 0 || g_str_has_prefix (code, "C.") || strcmp (code, "POSIX") == 0)
++            if (strcmp (command, "locale -a") == 0 && !g_strrstr (code, ".utf8"))
+                 continue;
+ 
+             language = g_object_new (LIGHTDM_TYPE_LANGUAGE, "code", code, NULL);
+@@ -87,6 +95,71 @@
+     have_languages = TRUE;
+ }
+ 
++static gboolean
++is_utf8 (const gchar *code)
++{
++    return g_strrstr (code, ".utf8") || g_strrstr (code, ".UTF-8");
++}
++
++/**
++ * get_locale_name:
++ * @code: A language, either as a valid locale name or as a shorter language code.
++ * 
++ * Get a valid locale name that can be passed to setlocale(), so we always can
++ * use nl_langinfo() to get language and country names.
++ * 
++ * Return value: A locale name that corresponds with @code.
++ **/
++static gchar *
++get_locale_name (const gchar *code)
++{
++    gchar *locale = NULL, *language;
++    char *at;
++    static gchar **avail_locales;
++    gint i;
++
++    if (is_utf8 (code))
++        return (gchar *) code;
++
++    if ( (at = strchr (code, '@')) )
++        language = g_strndup (code, at - code);
++    else
++        language = g_strdup (code);
++
++    if (!avail_locales)
++    {
++        gchar *locales;
++        GError *error = NULL;
++        if (g_spawn_command_line_sync ("locale -a", &locales, NULL, NULL, &error))
++        {
++            avail_locales = g_strsplit (g_strchomp (locales), "\n", -1);
++            g_free (locales);
++        }
++        else
++        {
++            g_warning ("Failed to run 'locale -a': %s", error->message);
++            g_clear_error (&error);
++            goto out;
++        }
++    }
++
++    for (i = 0; avail_locales[i]; i++)
++    {
++        gchar *loc = avail_locales[i];
++        if (!g_strrstr (loc, ".utf8"))
++            continue;
++        if (g_str_has_prefix (loc, language))
++        {
++            locale = g_strdup (loc);
++            break;
++        }
++    }
++
++out:
++    g_free (language);
++    return locale;
++}
++
+ /**
+  * lightdm_get_language:
+  *
+@@ -162,16 +235,27 @@
+ 
+     if (!priv->name)
+     {
+-        char *current = setlocale(LC_ALL, NULL);
+-        setlocale(LC_ALL, priv->code);
+-#ifdef _NL_IDENTIFICATION_LANGUAGE
+-        priv->name = g_strdup (nl_langinfo (_NL_IDENTIFICATION_LANGUAGE));
+-#else
+-        priv->name = g_strdup (priv->code);
+-        if (strchr (priv->name, '_'))
+-            *strchr (priv->name, '_') = '\0';
++#ifdef NL_LANGINFO_LANGUAGE
++        gchar *locale = get_locale_name (priv->code);
++        if (locale)
++        {
++            gchar *current = setlocale (LC_ALL, NULL);
++            setlocale (LC_IDENTIFICATION, locale);
++            setlocale (LC_MESSAGES, "");
++
++            gchar *language_en = nl_langinfo (_NL_IDENTIFICATION_LANGUAGE);
++            if (language_en && strlen (language_en) > 0)
++                priv->name = g_strdup (dgettext ("iso_639_3", language_en));
++
++            setlocale (LC_ALL, current);
++        }
+ #endif
+-        setlocale(LC_ALL, current);
++        if (!priv->name)
++        {
++            gchar **tokens = g_strsplit_set (priv->code, "_.@", 2);
++            priv->name = g_strdup (tokens[0]);
++            g_strfreev (tokens);
++        }
+     }
+ 
+     return priv->name;
+@@ -194,34 +278,34 @@
+ 
+     priv = GET_PRIVATE (language);
+ 
+-    if (!priv->territory)
++    if (!priv->territory && strchr (priv->code, '_'))
+     {
+-        char *current = setlocale(LC_ALL, NULL);
+-        setlocale(LC_ALL, priv->code);
+-#ifdef _NL_IDENTIFICATION_TERRITORY
+-        priv->territory = g_strdup (nl_langinfo (_NL_IDENTIFICATION_TERRITORY));
+-#else
+-        if (strchr (priv->code, '_'))
+-        {
+-            priv->territory = g_strdup (strchr (priv->code, '_') + 1);
+-            if (strchr (priv->territory, '.'))
+-                *strchr (priv->territory, '.') = '\0';
+-        }      
+-        else
+-            priv->territory = g_strdup ("");        
++#ifdef NL_LANGINFO_COUNTRY
++        gchar *locale = get_locale_name (priv->code);
++        if (locale)
++        {
++            gchar *current = setlocale (LC_ALL, NULL);
++            setlocale (LC_IDENTIFICATION, locale);
++            setlocale (LC_MESSAGES, "");
++
++            gchar *country_en = nl_langinfo (_NL_IDENTIFICATION_TERRITORY);
++            if (country_en && strlen (country_en) > 0 && g_strcmp0 (country_en, "ISO") != 0)
++                priv->territory = g_strdup (dgettext ("iso_3166", country_en));
++
++            setlocale (LC_ALL, current);
++        }
+ #endif
+-        setlocale(LC_ALL, current);
++        if (!priv->territory)
++        {
++            gchar **tokens = g_strsplit_set (priv->code, "_.@", 3);
++            priv->territory = g_strdup (tokens[1]);
++            g_strfreev (tokens);
++        }
+     }
+ 
+     return priv->territory;
+ }
+ 
+-static gboolean
+-is_utf8 (const gchar *code)
+-{
+-    return g_str_has_suffix (code, ".utf8") || g_str_has_suffix (code, ".UTF-8");
+-}
+-
+ /**
+  * lightdm_language_matches:
+  * @language: A #LightDMLanguage

@@ -1,0 +1,12 @@
+diff -urN lightdm-1.0.6.orig/greeters/gtk/lightdm-gtk-greeter.conf lightdm-1.0.6/greeters/gtk/lightdm-gtk-greeter.conf
+--- lightdm-1.0.6.orig/greeters/gtk/lightdm-gtk-greeter.conf	2011-11-28 00:39:19.475239758 +0400
++++ lightdm-1.0.6/greeters/gtk/lightdm-gtk-greeter.conf	2011-11-28 01:01:53.917304615 +0400
+@@ -8,7 +8,7 @@
+ # xft-rgba = Type of subpixel antialiasing (none, rgb, bgr, vrgb or vbgr)
+ #
+ [greeter]
+-#background=
++background=/usr/share/backgrounds/default.png
+ #show-language-selector=false
+ #theme-name=
+ #font-name=

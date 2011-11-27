@@ -1,0 +1,49 @@
+Description: Save selected language also when accountsservice is in use.
+Forwarded: no
+Author: Gunnar Hjalmarsson <ubuntu@gunnar.cc>
+
+--- lightdm.orig/src/accounts.c	2011-10-06 02:58:59 +0200
++++ lightdm/src/accounts.c	2011-10-28 06:02:18 +0200
+@@ -451,11 +451,14 @@
+ }
+ 
+ void
+-user_set_locale (User *user, const gchar *locale)
++user_set_language (User *user, const gchar *language)
+ {
+     g_return_if_fail (user != NULL);
+-    if (!user->priv->proxy)
+-        save_string_to_dmrc (user->priv->name, "Desktop", "Language", locale);
++
++    if (user->priv->proxy)
++        call_method (user->priv->proxy, "SetLanguage", g_variant_new ("(s)", language), "()", NULL);
++    else
++        save_string_to_dmrc (user->priv->name, "Desktop", "Language", language);
+ }
+ 
+ void
+
+--- lightdm.orig/src/accounts.h	2011-10-06 01:05:02 +0200
++++ lightdm/src/accounts.h	2011-10-28 05:56:26 +0200
+@@ -64,7 +64,7 @@
+ 
+ const gchar *user_get_locale (User *user);
+ 
+-void user_set_locale (User *user, const gchar *language);
++void user_set_language (User *user, const gchar *language);
+ 
+ G_END_DECLS
+ 
+
+--- lightdm.orig/src/greeter.c	2011-10-06 05:47:15 +0200
++++ lightdm/src/greeter.c	2011-10-28 02:24:00 +0200
+@@ -442,7 +442,7 @@
+ 
+     g_debug ("Greeter sets language %s", language);
+     user = pam_session_get_user (greeter->priv->authentication);
+-    user_set_locale (user, language);
++    user_set_language (user, language);
+ }
+ 
+ static guint32
+

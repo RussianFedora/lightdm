@@ -1,0 +1,16 @@
+diff -up lightdm-1.0.1/greeters/gtk/lightdm-gtk-greeter.desktop.fix-desktop lightdm-1.0.1/greeters/gtk/lightdm-gtk-greeter.desktop
+--- lightdm-1.0.1/greeters/gtk/lightdm-gtk-greeter.desktop.fix-desktop	2011-10-07 11:25:52.805476528 +0200
++++ lightdm-1.0.1/greeters/gtk/lightdm-gtk-greeter.desktop	2011-10-07 11:27:34.900766938 +0200
+@@ -3,4 +3,3 @@ Name=LightDM GTK+ Greeter
+ Comment=This runs the GTK+ greeter, it should only be run from LightDM
+ Exec=lightdm-gtk-greeter
+ Type=Application
+-X-Ubuntu-Gettext-Domain=lightdm
+diff -up lightdm-1.0.1/greeters/qt/lightdm-qt-greeter.desktop.fix-desktop lightdm-1.0.1/greeters/qt/lightdm-qt-greeter.desktop
+--- lightdm-1.0.1/greeters/qt/lightdm-qt-greeter.desktop.fix-desktop	2011-10-07 11:29:52.536809107 +0200
++++ lightdm-1.0.1/greeters/qt/lightdm-qt-greeter.desktop	2011-10-07 11:30:46.575433184 +0200
+@@ -3,4 +3,3 @@ Name=LightDM Qt Greeter
+ Comment=This runs the Qt greeter, it should only be run from LightDM
+ Exec=lightdm-qt-greeter
+ Type=Application
+-X-Ubuntu-Gettext-Domain=lightdm

@@ -1,0 +1,5 @@
+diff -up lightdm-1.0.1/AUTHORS.fix-blank lightdm-1.0.1/AUTHORS
+--- lightdm-1.0.1/AUTHORS.fix-blank	2011-10-07 20:37:58.244794735 +0200
++++ lightdm-1.0.1/AUTHORS	2011-10-07 20:43:44.578561082 +0200
+@@ -0,0 +1 @@
++Robert Ancell <robert.ancell@canonical.com>

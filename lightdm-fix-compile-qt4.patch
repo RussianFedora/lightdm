@@ -1,0 +1,55 @@
+diff -up lightdm-1.0.1/greeters/qt/Makefile.am.qt4 lightdm-1.0.1/greeters/qt/Makefile.am
+--- lightdm-1.0.1/greeters/qt/Makefile.am.qt4	2011-10-07 15:27:55.588070625 +0200
++++ lightdm-1.0.1/greeters/qt/Makefile.am	2011-10-07 15:28:26.733872296 +0200
+@@ -4,16 +4,16 @@ xgreetersdir = $(datadir)/xgreeters
+ dist_xgreeters_DATA = lightdm-qt-greeter.desktop
+ 
+ greeter_moc.cpp: greeter.h
+-	moc $< -o $@
++	moc-qt4 $< -o $@
+ loginprompt_moc.cpp: loginprompt.h
+-	moc $< -o $@
++	moc-qt4 $< -o $@
+ panel_moc.cpp: panel.h
+-	moc $< -o $@
++	moc-qt4 $< -o $@
+ 
+ ui_loginprompt.h: loginprompt.ui
+-	uic $< -o $@
++	uic-qt4 $< -o $@
+ ui_panel.h: panel.ui
+-	uic $< -o $@
++	uic-qt4 $< -o $@
+ 
+ loginprompt.cpp: ui_loginprompt.h
+ panel.cpp: ui_panel.h
+diff -up lightdm-1.0.1/liblightdm-qt/Makefile.am.qt4 lightdm-1.0.1/liblightdm-qt/Makefile.am
+--- lightdm-1.0.1/liblightdm-qt/Makefile.am.qt4	2011-10-07 15:49:00.452776911 +0200
++++ lightdm-1.0.1/liblightdm-qt/Makefile.am	2011-10-07 15:48:47.968855858 +0200
+@@ -7,11 +7,11 @@ MOC_FILES = \
+ 	user_moc.cpp 
+ 
+ greeter_moc.cpp: QLightDM/Greeter
+-	moc $< -o $@
++	moc-qt4 $< -o $@
+ session_moc.cpp: QLightDM/Session
+-	moc $< -o $@
++	moc-qt4 $< -o $@
+ user_moc.cpp: QLightDM/User
+-	moc $< -o $@
++	moc-qt4 $< -o $@
+ 
+ liblightdm_qt_1_la_LIBADD = $(LIBLIGHTDM_QT_LIBS)
+ liblightdm_qt_1_la_CXXFLAGS = $(LIBLIGHTDM_QT_CFLAGS) \
+diff -up lightdm-1.0.1/tests/src/Makefile.am.qt4 lightdm-1.0.1/tests/src/Makefile.am
+--- lightdm-1.0.1/tests/src/Makefile.am.qt4	2011-10-07 15:29:21.865202000 +0200
++++ lightdm-1.0.1/tests/src/Makefile.am	2011-10-07 15:29:57.392978153 +0200
+@@ -56,7 +56,7 @@ test_script_hook_LDADD = \
+ 	$(GLIB_LIBS)
+ 
+ test-qt-greeter_moc.cpp: test-qt-greeter.h
+-	moc $< -o $@
++	moc-qt4 $< -o $@
+ test_qt_greeter_SOURCES = test-qt-greeter.cpp test-qt-greeter.h test-qt-greeter_moc.cpp status.c status.h
+ test_qt_greeter_CXXFLAGS = \
+ 	-I$(top_srcdir)/liblightdm-qt \
